@@ -2,12 +2,17 @@ const express = require('express');
 const app = express();
 const port = 3000;
 
+// Parse JSON request bodies (e.g. POST /tasks).
+app.use(express.json());
+
+// In-memory task store — data is lost when the server restarts.
 const tasks = [
   { id: 1, title: 'Buy groceries', done: false },
   { id: 2, title: 'Walk the dog', done: true },
   { id: 3, title: 'Read a book', done: false },
 ];
 
+// API metadata — lists available endpoints for clients and docs.
 app.get('/', (req, res) => {
   res.json({
     name: 'Task API',
@@ -16,6 +21,7 @@ app.get('/', (req, res) => {
   });
 });
 
+// Liveness check for load balancers and monitoring.
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
@@ -24,10 +30,29 @@ app.get('/tasks', (req, res) => {
   res.json(tasks);
 });
 
+// Create a task. Client sends { "title": "..." }; server assigns id and done=false.
+app.post('/tasks', (req, res) => {
+  const { title } = req.body;
+
+  // Business rule: never trust the client — title must be present and non-empty.
+  if (title === undefined || title === null || String(title).trim() === '') {
+    return res.status(400).json({ error: 'title is required and cannot be empty' });
+  }
+
+  // Next free id is one above the current highest (handles gaps if tasks are removed later).
+  const id = tasks.length === 0 ? 1 : Math.max(...tasks.map((t) => t.id)) + 1;
+  const task = { id, title: String(title).trim(), done: false };
+
+  tasks.push(task);
+  res.status(201).json(task);
+});
+
+// :id is a path parameter — the number in /tasks/2 comes from the URL, not the body.
 app.get('/tasks/:id', (req, res) => {
   const id = Number(req.params.id);
   const task = tasks.find((t) => t.id === id);
 
+  // 404, not an empty 200 — status codes tell machines whether the resource exists.
   if (!task) {
     return res.status(404).json({ error: `Task ${id} not found` });
   }
