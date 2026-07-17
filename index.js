@@ -1,20 +1,24 @@
+// Task API — a small in-memory CRUD server for a to-do list.
+// Stages 0–6 of the W2 assignment, plus the optional extras.
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const openapi = require('./openapi.json');
 const app = express();
 const port = 3000;
 
-// Parse JSON request bodies (e.g. POST /tasks).
+// Express needs this to parse JSON request bodies.
 app.use(express.json());
 
-// Original demo data — POST /reset restores a fresh copy of this list.
+// ---------------------------------------------------------------------------
+// "Database" — just a list in memory. Gone when the server restarts.
+// (That data loss is the whole point of next week's database lesson.)
+// ---------------------------------------------------------------------------
 const SEED_TASKS = [
   { id: 1, title: 'Buy groceries', done: false },
   { id: 2, title: 'Walk the dog', done: true },
   { id: 3, title: 'Read a book', done: false },
 ];
 
-// In-memory task store — data is lost when the server restarts.
 const tasks = SEED_TASKS.map((task) => ({ ...task }));
 
 function resetTasks() {
@@ -22,10 +26,14 @@ function resetTasks() {
   tasks.push(...SEED_TASKS.map((task) => ({ ...task })));
 }
 
-// OpenAPI spec — interactive docs at /docs.
+// ---------------------------------------------------------------------------
+// Stage 5 — Swagger UI at /docs
+// ---------------------------------------------------------------------------
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapi));
 
-// API metadata — lists available endpoints for clients and docs.
+// ---------------------------------------------------------------------------
+// Stage 1 — the front door
+// ---------------------------------------------------------------------------
 app.get('/', (req, res) => {
   res.json({
     name: 'Task API',
@@ -34,15 +42,17 @@ app.get('/', (req, res) => {
   });
 });
 
-// Liveness check for load balancers and monitoring.
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Query params after ? filter the list — they are not part of the address.
+// ---------------------------------------------------------------------------
+// Stage 2 — Read: list + single task (with optional filtering/search extras)
+// ---------------------------------------------------------------------------
 app.get('/tasks', (req, res) => {
   let result = tasks;
 
+  // Extras: GET /tasks?done=true  → only finished (or only open) tasks.
   if (req.query.done !== undefined) {
     if (req.query.done !== 'true' && req.query.done !== 'false') {
       return res.status(400).json({ error: 'done must be true or false' });
@@ -51,6 +61,7 @@ app.get('/tasks', (req, res) => {
     result = result.filter((t) => t.done === done);
   }
 
+  // Extras: GET /tasks?search=milk → tasks whose title contains the word.
   if (req.query.search !== undefined) {
     const word = String(req.query.search).trim();
     if (word === '') {
@@ -63,7 +74,9 @@ app.get('/tasks', (req, res) => {
   res.json(result);
 });
 
-// Derived counts — the server computes, not just stores.
+// ---------------------------------------------------------------------------
+// Extras — stats. Declared before "/tasks/:id" so "stats" isn't read as an id.
+// ---------------------------------------------------------------------------
 app.get('/stats', (req, res) => {
   const done = tasks.filter((t) => t.done).length;
   res.json({
@@ -73,22 +86,22 @@ app.get('/stats', (req, res) => {
   });
 });
 
-// Restore the 3 seed tasks (handy for demos and testing).
+// Extras — reset back to the 3 example tasks. Handy for demos.
 app.post('/reset', (req, res) => {
   resetTasks();
   res.json(tasks);
 });
 
-// Create a task. Client sends { "title": "..." }; server assigns id and done=false.
+// ---------------------------------------------------------------------------
+// Stage 3 — Create
+// ---------------------------------------------------------------------------
 app.post('/tasks', (req, res) => {
   const { title } = req.body;
 
-  // Business rule: never trust the client — title must be present and non-empty.
   if (title === undefined || title === null || String(title).trim() === '') {
     return res.status(400).json({ error: 'title is required and cannot be empty' });
   }
 
-  // Next free id is one above the current highest (handles gaps if tasks are removed later).
   const id = tasks.length === 0 ? 1 : Math.max(...tasks.map((t) => t.id)) + 1;
   const task = { id, title: String(title).trim(), done: false };
 
@@ -96,12 +109,10 @@ app.post('/tasks', (req, res) => {
   res.status(201).json(task);
 });
 
-// :id is a path parameter — the number in /tasks/2 comes from the URL, not the body.
 app.get('/tasks/:id', (req, res) => {
   const id = Number(req.params.id);
   const task = tasks.find((t) => t.id === id);
 
-  // 404, not an empty 200 — status codes tell machines whether the resource exists.
   if (!task) {
     return res.status(404).json({ error: `Task ${id} not found` });
   }
@@ -109,7 +120,9 @@ app.get('/tasks/:id', (req, res) => {
   res.json(task);
 });
 
-// Update title and/or done on an existing task (partial body is OK).
+// ---------------------------------------------------------------------------
+// Stage 4 — Update & Delete
+// ---------------------------------------------------------------------------
 app.put('/tasks/:id', (req, res) => {
   const id = Number(req.params.id);
   const task = tasks.find((t) => t.id === id);
@@ -143,7 +156,6 @@ app.put('/tasks/:id', (req, res) => {
   res.json(task);
 });
 
-// Remove a task. 204 = success with no response body.
 app.delete('/tasks/:id', (req, res) => {
   const id = Number(req.params.id);
   const index = tasks.findIndex((t) => t.id === id);
@@ -156,6 +168,9 @@ app.delete('/tasks/:id', (req, res) => {
   res.status(204).send();
 });
 
+// ---------------------------------------------------------------------------
+// Stage 0 — start the server
+// ---------------------------------------------------------------------------
 app.listen(port, () => {
   console.log(`CRUD API listening on port ${port}`);
 });
