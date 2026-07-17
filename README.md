@@ -18,6 +18,8 @@ npm start
 
 The API runs at `http://localhost:3000`.
 
+OpenAPI docs (Swagger UI) are at [http://localhost:3000/docs](http://localhost:3000/docs). The spec lives in `openapi.json`.
+
 ## Endpoints
 
 ### `GET /`

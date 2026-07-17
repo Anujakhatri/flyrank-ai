@@ -1,4 +1,6 @@
 const express = require('express');
+const swaggerUi = require('swagger-ui-express');
+const openapi = require('./openapi.json');
 const app = express();
 const port = 3000;
 
@@ -11,6 +13,9 @@ const tasks = [
   { id: 2, title: 'Walk the dog', done: true },
   { id: 3, title: 'Read a book', done: false },
 ];
+
+// OpenAPI spec — interactive docs at /docs.
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapi));
 
 // API metadata — lists available endpoints for clients and docs.
 app.get('/', (req, res) => {
