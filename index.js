@@ -7,12 +7,20 @@ const port = 3000;
 // Parse JSON request bodies (e.g. POST /tasks).
 app.use(express.json());
 
-// In-memory task store — data is lost when the server restarts.
-const tasks = [
+// Original demo data — POST /reset restores a fresh copy of this list.
+const SEED_TASKS = [
   { id: 1, title: 'Buy groceries', done: false },
   { id: 2, title: 'Walk the dog', done: true },
   { id: 3, title: 'Read a book', done: false },
 ];
+
+// In-memory task store — data is lost when the server restarts.
+const tasks = SEED_TASKS.map((task) => ({ ...task }));
+
+function resetTasks() {
+  tasks.length = 0;
+  tasks.push(...SEED_TASKS.map((task) => ({ ...task })));
+}
 
 // OpenAPI spec — interactive docs at /docs.
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapi));
@@ -22,7 +30,7 @@ app.get('/', (req, res) => {
   res.json({
     name: 'Task API',
     version: '1.0',
-    endpoints: ['/tasks'],
+    endpoints: ['/tasks', '/stats', '/reset'],
   });
 });
 
@@ -31,7 +39,43 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// Query params after ? filter the list — they are not part of the address.
 app.get('/tasks', (req, res) => {
+  let result = tasks;
+
+  if (req.query.done !== undefined) {
+    if (req.query.done !== 'true' && req.query.done !== 'false') {
+      return res.status(400).json({ error: 'done must be true or false' });
+    }
+    const done = req.query.done === 'true';
+    result = result.filter((t) => t.done === done);
+  }
+
+  if (req.query.search !== undefined) {
+    const word = String(req.query.search).trim();
+    if (word === '') {
+      return res.status(400).json({ error: 'search must not be empty' });
+    }
+    const lower = word.toLowerCase();
+    result = result.filter((t) => t.title.toLowerCase().includes(lower));
+  }
+
+  res.json(result);
+});
+
+// Derived counts — the server computes, not just stores.
+app.get('/stats', (req, res) => {
+  const done = tasks.filter((t) => t.done).length;
+  res.json({
+    total: tasks.length,
+    done,
+    open: tasks.length - done,
+  });
+});
+
+// Restore the 3 seed tasks (handy for demos and testing).
+app.post('/reset', (req, res) => {
+  resetTasks();
   res.json(tasks);
 });
 

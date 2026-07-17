@@ -13,11 +13,30 @@
   "paths": {
     "/tasks": {
       "get": {
-        "summary": "List all tasks",
+        "summary": "List tasks",
         "operationId": "listTasks",
+        "parameters": [
+          {
+            "name": "done",
+            "in": "query",
+            "description": "Filter by completion status",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Filter tasks whose title contains this word",
+            "schema": {
+              "type": "string",
+              "example": "milk"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "All tasks",
+            "description": "Matching tasks",
             "content": {
               "application/json": {
                 "schema": {
@@ -25,6 +44,16 @@
                   "items": {
                     "$ref": "#/components/schemas/Task"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -201,6 +230,45 @@
           }
         }
       }
+    },
+    "/stats": {
+      "get": {
+        "summary": "Task counts",
+        "operationId": "getStats",
+        "responses": {
+          "200": {
+            "description": "Aggregate task statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reset": {
+      "post": {
+        "summary": "Reset to seed data",
+        "operationId": "resetTasks",
+        "responses": {
+          "200": {
+            "description": "Seed tasks restored",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Task"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -253,6 +321,24 @@
         "properties": {
           "error": {
             "type": "string"
+          }
+        }
+      },
+      "Stats": {
+        "type": "object",
+        "required": ["total", "done", "open"],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "example": 7
+          },
+          "done": {
+            "type": "integer",
+            "example": 3
+          },
+          "open": {
+            "type": "integer",
+            "example": 4
           }
         }
       }
