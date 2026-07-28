@@ -30,7 +30,7 @@
             "description": "Filter tasks whose title contains this word",
             "schema": {
               "type": "string",
-              "example": "milk"
+              "example": "water"
             }
           }
         ],
@@ -283,7 +283,7 @@
           },
           "title": {
             "type": "string",
-            "example": "Buy groceries"
+            "example": "Drink water"
           },
           "done": {
             "type": "boolean",
@@ -297,7 +297,7 @@
         "properties": {
           "title": {
             "type": "string",
-            "example": "Buy milk"
+            "example": "Prepare lunch"
           }
         }
       },
@@ -307,7 +307,7 @@
         "properties": {
           "title": {
             "type": "string",
-            "example": "Buy oat milk"
+            "example": "Prepare dinner"
           },
           "done": {
             "type": "boolean",

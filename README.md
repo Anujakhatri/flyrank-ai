@@ -68,17 +68,18 @@ Returns all tasks. Optional query parameters filter the list (the part after `?`
 |-------|---------|--------|
 | `done` | `?done=true` | Only finished tasks |
 | `done` | `?done=false` | Only open tasks |
-| `search` | `?search=milk` | Title contains the word (case-insensitive) |
+| `search` | `?search=water` | Title contains the word (case-insensitive) |
 
-Filters can be combined: `?done=false&search=book`
+Filters can be combined: `?done=false&search=breakfast`
 
 **Response**
 
 ```json
 [
-  { "id": 1, "title": "Buy groceries", "done": false },
-  { "id": 2, "title": "Walk the dog", "done": true },
-  { "id": 3, "title": "Read a book", "done": false }
+  { "id": 1, "title": "Drink water", "done": true },
+  { "id": 2, "title": "Walk for 10 minutes", "done": false },
+  { "id": 3, "title": "Prepare breakfast", "done": false },
+  { "id": 4, "title": "Prepare for work", "done": true }
 ]
 ```
 
@@ -87,7 +88,7 @@ Filters can be combined: `?done=false&search=book`
 ```bash
 curl http://localhost:3000/tasks
 curl "http://localhost:3000/tasks?done=true"
-curl "http://localhost:3000/tasks?search=milk"
+curl "http://localhost:3000/tasks?search=water"
 ```
 
 ### `GET /stats`
@@ -108,15 +109,16 @@ curl http://localhost:3000/stats
 
 ### `POST /reset`
 
-Restores the three seed example tasks. Useful for demos and testing.
+Restores the four seed example tasks. Useful for demos and testing.
 
 **Response (200)**
 
 ```json
 [
-  { "id": 1, "title": "Buy groceries", "done": false },
-  { "id": 2, "title": "Walk the dog", "done": true },
-  { "id": 3, "title": "Read a book", "done": false }
+  { "id": 1, "title": "Drink water", "done": true },
+  { "id": 2, "title": "Walk for 10 minutes", "done": false },
+  { "id": 3, "title": "Prepare breakfast", "done": false },
+  { "id": 4, "title": "Prepare for work", "done": true }
 ]
 ```
 
@@ -133,7 +135,7 @@ Returns a single task by id.
 **Response (200)**
 
 ```json
-{ "id": 1, "title": "Buy groceries", "done": false }
+{ "id": 1, "title": "Drink water", "done": true }
 ```
 
 **Response (404)**
@@ -156,13 +158,13 @@ Creates a new task.
 **Request body**
 
 ```json
-{ "title": "Buy milk" }
+{ "title": "Buy book" }
 ```
 
 **Response (201)**
 
 ```json
-{ "id": 4, "title": "Buy milk", "done": false }
+{ "id": 4, "title": "Buy book", "done": false }
 ```
 
 **Response (400)**
@@ -176,7 +178,7 @@ Creates a new task.
 ```bash
 curl -X POST http://localhost:3000/tasks \
   -H "Content-Type: application/json" \
-  -d '{"title": "Buy milk"}'
+  -d '{"title": "Buy book"}'
 ```
 
 ### `PUT /tasks/:id`
@@ -186,13 +188,13 @@ Updates a task's `title` and/or `done`. Send one or both fields; omitted fields 
 **Request body**
 
 ```json
-{ "title": "Buy oat milk", "done": true }
+{ "title": "Buy oat book", "done": true }
 ```
 
 **Response (200)**
 
 ```json
-{ "id": 1, "title": "Buy oat milk", "done": true }
+{ "id": 1, "title": "Buy oat book", "done": true }
 ```
 
 **Response (400)**

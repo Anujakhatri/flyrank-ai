@@ -1,30 +1,23 @@
-// Task API — a small in-memory CRUD server for a to-do list.
-// Stages 0–6 of the W2 assignment, plus the optional extras.
 const express = require('express');
-const swaggerUi = require('swagger-ui-express');
-const openapi = require('./openapi.json');
 const app = express();
 const port = 3000;
+const swaggerUi = require('swagger-ui-express');
+const openapi = require('./openapi.json');
 
-// Express needs this to parse JSON request bodies.
 app.use(express.json());
 
-// ---------------------------------------------------------------------------
-// "Database" — just a list in memory. Gone when the server restarts.
-// (That data loss is the whole point of next week's database lesson.)
-// ---------------------------------------------------------------------------
-const SEED_TASKS = [
+const BASE_TASKS = [
   { id: 1, title: 'Drink water', done: true },
   { id: 2, title: 'Walk for 10 minutes', done: false },
   { id: 3, title: 'Prepare breakfast', done: false },
   { id: 4, title: 'Prepare for work', done: true },
 ];
 
-const tasks = SEED_TASKS.map((task) => ({ ...task }));
+const tasks = BASE_TASKS.map((task) => ({ ...task }));
 
 function resetTasks() {
   tasks.length = 0;
-  tasks.push(...SEED_TASKS.map((task) => ({ ...task })));
+  tasks.push(...BASE_TASKS.map((task) => ({ ...task })));
 }
 
 // ---------------------------------------------------------------------------
@@ -62,7 +55,7 @@ app.get('/tasks', (req, res) => {
     result = result.filter((t) => t.done === done);
   }
 
-  // Extras: GET /tasks?search=milk → tasks whose title contains the word.
+  // Extras: GET /tasks?search=water → tasks whose title contains the word.
   if (req.query.search !== undefined) {
     const word = String(req.query.search).trim();
     if (word === '') {
