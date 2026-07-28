@@ -1,7 +1,7 @@
 {
-  "name": "internship-crud-api",
+  "name": "my-crud-api",
   "version": "1.0.0",
-  "description": "CRUD API for internship",
+  "description": "This is the first assignment of flyrank ai",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -10,16 +10,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/flyrank-bih/internship-CRUD-API.git"
+    "url": "https://github.com/Anujakhatri/flyrank-ai.git"
   },
-  "author": "Flyrank",
+  "author": "Anuja Khatri",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/flyrank-bih/internship-CRUD-API/issues"
-  },
-  "homepage": "https://github.com/flyrank-bih/internship-CRUD-API#readme",
+  "keywords": [],
+  "type": "commonjs",
   "dependencies": {
-    "express": "^5.2.1",
-    "swagger-ui-express": "^5.0.1"
+    "express": "^4.22.2",
+    "swagger-ui-express": "^4.6.3"
   }
 }
