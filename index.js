@@ -14,9 +14,10 @@ app.use(express.json());
 // (That data loss is the whole point of next week's database lesson.)
 // ---------------------------------------------------------------------------
 const SEED_TASKS = [
-  { id: 1, title: 'Buy groceries', done: false },
-  { id: 2, title: 'Walk the dog', done: true },
-  { id: 3, title: 'Read a book', done: false },
+  { id: 1, title: 'Drink water', done: true },
+  { id: 2, title: 'Walk for 10 minutes', done: false },
+  { id: 3, title: 'Prepare breakfast', done: false },
+  { id: 4, title: 'Prepare for work', done: true },
 ];
 
 const tasks = SEED_TASKS.map((task) => ({ ...task }));
