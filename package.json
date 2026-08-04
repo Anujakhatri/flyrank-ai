@@ -1,23 +1,29 @@
 {
-  "name": "my-crud-api",
+  "name": "first-crud-api",
   "version": "1.0.0",
-  "description": "This is the first assignment of flyrank ai",
+  "description": "A simple Express CRUD API for managing tasks.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
-    "dev": "node --watch index.js"
+    "dev": "nodemon index.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Anujakhatri/flyrank-ai.git"
+    "url": "git+https://github.com/Anujakhatri/flyrank-ai.git"
   },
-  "author": "Anuja Khatri",
-  "license": "ISC",
   "keywords": [],
+  "author": "",
+  "license": "ISC",
   "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Anujakhatri/flyrank-ai/issues"
+  },
+  "homepage": "https://github.com/Anujakhatri/flyrank-ai#readme",
   "dependencies": {
-    "express": "^4.22.2",
-    "swagger-ui-express": "^4.6.3"
+    "express": "^5.2.1",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }
