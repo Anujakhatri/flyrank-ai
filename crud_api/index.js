@@ -1,6 +1,8 @@
 const express = require('express');
 const app = express();
 
+app.use(express.json());  //middleware to parse JSON request body
+
 //export tasks data
 const tasks = require('./data/tasks');
 
@@ -20,6 +22,22 @@ app.get('/tasks/:id', (req, res) => {
   } else {
     res.status(404).json({ error: "Task not found" });
   }
+});
+
+app.post('/tasks', (req, res) => {
+  const {title} = req.body;  //object destructuring to get title from req.body
+  if (!title || title.trim()===''){
+    return res.status(400).json({error:"Title is required and cannot be empty"});
+  }
+
+  const newTask = {
+    id: tasks.length ? Math.max(...tasks.map(t => t.id)) + 1 : 1,
+    title: req.body.title,
+    done: false
+  };
+
+  tasks.push(newTask);
+  res.status(201).json(newTask);
 });
 
 app.get('/health', (req, res) =>{ 
