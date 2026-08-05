@@ -40,6 +40,51 @@ app.post('/tasks', (req, res) => {
   res.status(201).json(newTask);
 });
 
+app.put('/tasks/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const task = tasks.find((t) => t.id === id);
+
+  if (!task) {
+    return res.status(404).json({ error: "Task not found" });
+  }
+
+  const { title, done } = req.body || {};
+
+  // at least one valid field must be present
+  if (title === undefined && done === undefined) {
+    return res.status(400).json({ error: "Provide at least 'title' or 'done' to update" });
+  }
+
+  if (title !== undefined) {
+    if (typeof title !== 'string' || title.trim() === '') {
+      return res.status(400).json({ error: "Title must be a non-empty string" });
+    }
+    task.title = title.trim();
+  }
+
+  if (done !== undefined) {
+    if (typeof done !== 'boolean') {
+      return res.status(400).json({ error: "Done must be a boolean" });
+    }
+    task.done = done;
+  }
+
+  res.json(task);
+});
+
+app.delete('/tasks/:id', (req, res) => {
+  const id= parseInt(req.params.id);
+  const taskIndex = tasks.findIndex((t) => t.id === id);
+
+  if (taskIndex === -1) {
+    return res.status(404).json({ error: "Task not found" });
+  }
+
+  tasks.splice(taskIndex, 1);
+  res.status(204).send();  // No content response
+});
+
+
 app.get('/health', (req, res) =>{ 
   res.json({status: "ok"})
 });
