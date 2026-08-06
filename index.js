@@ -136,7 +136,7 @@ app.get('/tasks/:id', (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               title: { type: string, example: "Buy milk" }
+ *               title: { type: string, example: "Buy book" }
  *             required: [title]
  *     responses:
  *       201:
@@ -291,8 +291,8 @@ app.post('/reset', (req, res) => {
   tasks.length = 0;
   tasks.push(
     { id: 1, title: "Learn Node.js", done: true },
-    { id: 2, title: "Learn Express.js", done: true },
-    { id: 3, title: "Learn Middleware", done: false }
+    { id: 2, title: "Understand Express.js", done: true },
+    { id: 3, title: "Middleware Concept", done: false }
   );
   res.json({ message: "Tasks reset", tasks });
 });

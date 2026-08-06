@@ -1,14 +1,19 @@
 const express = require('express');
 const app = express();
+
 const taskRouters = require('./src/routes/taskRoutes');
 const statsRouters = require('./src/routes/statsRoutes');
 const healthRouters = require('./src/routes/healthRoutes');
 const resetRouters = require('./src/routes/resetRoutes');
 
+const swaggerSpec = require('./src/config/swagger');
+const swaggerUi = require('swagger-ui-express');
+
 const errorhandling = require('./src/middleware/error-handling');
 
 
 app.use(express.json()); //middleware to parse json body
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get('/', (req, res) => {
     res.send("Hello Server!!");

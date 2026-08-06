@@ -2,10 +2,10 @@
   "name": "first-crud-api",
   "version": "1.0.0",
   "description": "A simple Express CRUD API for managing tasks.",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index.js"
+    "dev": "nodemon app.js"
   },
   "repository": {
     "type": "git",
