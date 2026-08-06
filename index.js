@@ -1,7 +1,11 @@
 const express = require('express');
 const app = express();
+const swaggerUi = require('swagger-ui-express');
+
+const openapi = require('./openai.json');
 
 app.use(express.json());  //middleware to parse JSON request body
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapi));
 
 //export tasks data
 const tasks = require('./data/tasks');
