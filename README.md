@@ -32,24 +32,53 @@ Interactive docs available at `http://localhost:3000/docs`.
 | PUT    | `/tasks/:id`  | Update a task's title and/or done     | 200     | 400, 404      |
 | DELETE | `/tasks/:id`  | Delete a task                         | 204     | 404           |
 
+### Extras
+
+| Method | Endpoint             | Description                       | Success | Errors |
+|--------|-----------------------|------------------------------------|---------|--------|
+| GET    | `/tasks?done=true`    | Filter tasks by done status       | 200     | —      |
+| GET    | `/tasks?search=milk`  | Search tasks by title             | 200     | —      |
+| GET    | `/stats`              | Task counts (total/done/open)     | 200     | —      |
+| POST   | `/reset`              | Reset tasks to seed data          | 200     | —      |
+
+#### Why POST for `/reset`?
+
+`POST /reset` restores the task list to its original seed data. POST is used instead of GET because this endpoint **changes server state** (it clears and re-seeds the `tasks` array) — and by HTTP convention, GET must never have side effects. GET requests can be triggered accidentally by browsers, crawlers, or caches; POST cannot, which keeps state-changing actions like this one safe from accidental triggering.
+
 ## Example Request
 
 ```bash
 curl -i -X POST http://localhost:3000/tasks -H "Content-Type: application/json" -d '{"title":"Buy Book"}'
 ```
+
+```
 HTTP/1.1 201 Created
 Content-Type: application/json; charset=utf-8
 
 {
-  "id":5,
-  "title":"Buy Book",
-  "done":false
+  "id": 5,
+  "title": "Buy Book",
+  "done": false
 }
+```
+
+```bash
+curl -i -X POST http://localhost:3000/reset
+```
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+```
 
 ## API Docs (Swagger UI)
 
 ![Swagger UI screenshot](./swagger.png)
 
-## What I learned
+## The Mortality Experiment
+
+Tasks created via `POST /tasks` live only in the server's RAM. `data/tasks.js` on disk holds only the original seed data, none of the CRUD operations write back to the file. Restarting the server wipes the in-memory array, so every restart reloads the same seed data, and anything created in the previous run is gone for good. This is exactly why real applications need a database.
+
+## What I Learned
 
 Building this taught me routing, middleware order, input validation as a business rule (never trust the client), correct HTTP status code usage, and describing an API with OpenAPI/Swagger.
