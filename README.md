@@ -75,6 +75,11 @@ Content-Type: application/json; charset=utf-8
 
 ![Swagger UI screenshot](./swagger.png)
 
+Verified
+All endpoints tested via curl with correct status codes (201, 200, 204, 404, 400)
+Swagger UI at /docs lists every endpoint, and the full CRUD cycle works via "Try it out"
+Confirmed in-memory data resets on server restart (see Mortality Experiment below)
+
 ## The Mortality Experiment
 
 Tasks created via `POST /tasks` live only in the server's RAM. `data/tasks.js` on disk holds only the original seed data, none of the CRUD operations write back to the file. Restarting the server wipes the in-memory array, so every restart reloads the same seed data, and anything created in the previous run is gone for good. This is exactly why real applications need a database.
@@ -82,3 +87,9 @@ Tasks created via `POST /tasks` live only in the server's RAM. `data/tasks.js` o
 ## What I Learned
 
 Building this taught me routing, middleware order, input validation as a business rule (never trust the client), correct HTTP status code usage, and describing an API with OpenAPI/Swagger.
+
+### Why real APIs never return "everything"
+
+Here, `GET /tasks` returns the full list by default. But real-world APIs almost never do this. Imagine a table with millions of rows — returning all of them at once means a huge response size: slow to generate on the server, slow to send over the network, and slow for the client to parse.
+
+It's not just about display. Without pagination, the server would have to read and prepare millions of rows for every single request, even though the client only needs to show 10–20 of them on screen at a time. Pagination (`limit` and `offset`) lets the client ask for a small slice of data, so the server only does the work for that slice — saving memory, bandwidth, and processing time on both ends.

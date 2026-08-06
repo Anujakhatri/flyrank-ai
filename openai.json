@@ -11,7 +11,23 @@
   "paths": {
     "/tasks": {
       "get": {
-        "summary": "List all tasks",
+        "summary": "List all tasks (optionally filter by done status or search title)",
+        "parameters": [
+          {
+            "name": "done",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean" },
+            "description": "Filter tasks by done status"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Filter tasks whose title contains this text"
+          }
+        ],
         "responses": {
           "200": {
             "description": "A list of tasks",
@@ -128,6 +144,52 @@
         "responses": {
           "204": { "description": "Task deleted, no content" },
           "404": { "description": "Task not found" }
+        }
+      }
+    },
+    "/stats": {
+      "get": {
+        "summary": "Get task counts (total, done, open)",
+        "responses": {
+          "200": {
+            "description": "Task statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": { "type": "integer", "example": 7 },
+                    "done": { "type": "integer", "example": 3 },
+                    "open": { "type": "integer", "example": 4 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reset": {
+      "post": {
+        "summary": "Reset tasks to the original seed data",
+        "responses": {
+          "200": {
+            "description": "Tasks reset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "Tasks reset" },
+                    "tasks": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Task" }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },

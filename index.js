@@ -1,11 +1,40 @@
 const express = require('express');
 const app = express();
 const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
 
 const openapi = require('./openai.json');
 
 app.use(express.json());  //middleware to parse JSON request body
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapi));
+
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Task CRUD API',
+      version: '1.0.0',
+      description: 'A simple task management API built step by step'
+    },
+    servers: [{ url: 'http://localhost:3000' }],
+    components: {
+      schemas: {
+        Task: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            title: { type: 'string', example: 'Buy Book' },
+            done: { type: 'boolean', example: false }
+          }
+        }
+      }
+    }
+  },
+  apis: ['./index.js']
+};
+
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 //export tasks data
 const tasks = require('./data/tasks');
@@ -16,7 +45,7 @@ app.get('/', (req, res) => {
 
 app.get('/tasks', (req, res) => {
   let result = tasks;
-  const { done , search } = req.query;
+  const { done , search, limit, offset } = req.query;
 
   if (done !== undefined) {
     const isDone = done === 'true'; 
@@ -28,8 +57,16 @@ app.get('/tasks', (req, res) => {
     result = result.filter(task => task.title.toLowerCase().includes(term));
   }
 
-  res.json(result);
+  // res.json(result);
+
+  const offsetNum = parseInt(offset) || 0;
+  const limitNum = limit !== undefined ? parseInt(limit) : result.length;
+
+  const paginatedResult = result.slice(offsetNum, offsetNum + limitNum);
+
+  res.json(paginatedResult);
 });
+
 
 app.get('/tasks/:id', (req, res) => {
   const id = parseInt(req.params.id);
@@ -132,3 +169,4 @@ app.post('/reset', (req, res) => {
   res.json({ message: "Tasks have been reset to initial state" });
 
 })
+
