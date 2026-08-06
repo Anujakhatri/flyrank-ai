@@ -177,6 +177,8 @@ After starting the server, open:
 http://localhost:3000/docs
 ```
 
+![Swagger UI](./swagger.png)
+
 The UI lists every endpoint with parameters, request body schema, and response codes (200 / 201 / 204 / 400 / 404). It also exposes a **Try it out** panel that calls the running API directly.
 
 ## Notes
