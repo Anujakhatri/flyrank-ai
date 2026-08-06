@@ -14,7 +14,7 @@ A simple RESTful CRUD API for managing tasks, built with Node.js and Express —
 git clone https://github.com/Anujakhatri/flyrank-ai.git
 cd first-crud-api
 npm install
-npx nodemon index.js
+npx nodemon app.js
 ```
 
 Server runs at `http://localhost:3000`.
