@@ -1,51 +1,50 @@
-// http handling middleware
+// Controller layer — only handles req/res, delegates to service, forwards errors.
+
 const taskService = require('../services/taskService');
 
-function getTasks(req, res, next){
-    try {
-        const result = taskService.getAll(req.query);
-        res.json(result);
-    } catch (error) {
-        next(error);
-    }
+function listTasks(req, res, next) {
+  try {
+    const { data, total } = taskService.listTasks(req.query);
+    res.status(200).json({ data, total, count: data.length });
+  } catch (err) {
+    next(err);
+  }
 }
 
-function getTaskById(req, res, next){
-    try {
-        const id = parseInt(req.params.id);
-        const task = taskService.getById(id);
-        res.json(task);
-    } catch (error) {
-        next(error);
-    }
+function getTask(req, res, next) {
+  try {
+    const task = taskService.getTask(req.params.id);
+    res.status(200).json(task);
+  } catch (err) {
+    next(err);
+  }
 }
 
-function createTask(req, res, next){
-    try {
-        const task = taskService.createTask(req.body.title);
-        res.status(201).json(task);
-    } catch (error) {
-        next(error);
-    }
+function createTask(req, res, next) {
+  try {
+    const task = taskService.createTask(req.body);
+    res.status(201).json(task);
+  } catch (err) {
+    next(err);
+  }
 }
 
-function updateTask(req, res, next){
-    try{
-        const id = parseInt(req.params.id);
-        const task = taskService.updateTask(id, req.body || {});
-        res.json(task);
-    } catch (error) {
-        next(error);
-    }
+function updateTask(req, res, next) {
+  try {
+    const task = taskService.updateTask(req.params.id, req.body);
+    res.status(200).json(task);
+  } catch (err) {
+    next(err);
+  }
 }
 
-function deleteTask(req, res, next){
-    try{
-        const id = parseInt(req.params.id);
-        taskService.deleteTask(id);
-        res.status(204).json();
-    } catch (error) {
-        next(error);
-    }
+function deleteTask(req, res, next) {
+  try {
+    taskService.deleteTask(req.params.id);
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
 }
-module.exports = { getTasks, getTaskById, createTask, updateTask, deleteTask };
+
+module.exports = { listTasks, getTask, createTask, updateTask, deleteTask };

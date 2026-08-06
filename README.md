@@ -1,95 +1,185 @@
-# Task CRUD API
+# First CRUD API — Task Management
 
-A simple RESTful CRUD API for managing tasks, built with Node.js and Express — created step by step to learn backend fundamentals: routing, validation, status codes, and API documentation with Swagger.
+A self-contained Express.js REST API for managing tasks, with a clean layered architecture (routes → controllers → services → repositories), an in-memory data store, and interactive Swagger documentation.
 
-## Tech Stack
+## Folder Structure
 
-- Node.js
-- Express
-- swagger-ui-express (interactive API docs)
-
-## Installation & Run
-
-```bash
-git clone https://github.com/Anujakhatri/flyrank-ai.git
-cd first-crud-api
-npm install
-npx nodemon index.js
+```
+First-CRUD-API/
+├── server.js                 # Entry point — starts the HTTP server
+├── package.json
+└── src/
+    ├── app.js                # App configuration — wires routes, middleware, and Swagger UI
+    ├── config/
+    │   └── swagger.js        # Swagger/OpenAPI definition (JSDoc-merged)
+    ├── data/
+    │   └── tasks.js          # In-memory data store + default seed values
+    ├── repositories/
+    │   └── taskRepository.js # Raw data access (find / create / update / delete)
+    ├── services/
+    │   └── taskService.js    # Validation & business rules; throws Error with .status
+    ├── controllers/
+    │   ├── taskController.js # Handles req/res for /tasks
+    │   ├── statsController.js# Handles req/res for /stats
+    │   └── resetController.js# Handles req/res for /reset
+    ├── routes/
+    │   ├── taskRoutes.js     # Maps /tasks URLs to controllers (+ @swagger comments)
+    │   ├── statsRoutes.js    # Maps /stats to its controller (+ @swagger comments)
+    │   └── resetRoutes.js    # Maps /reset to its controller (+ @swagger comments)
+    └── middleware/
+        └── error-handling.js # Central error handler — returns { error: message }
 ```
 
-Server runs at `http://localhost:3000`.
-Interactive docs available at `http://localhost:3000/docs`.
+### Layer Responsibilities
+
+- **Routes** — Only map URLs to controller functions. No logic, no validation.
+- **Controllers** — Only handle `req` / `res`. Call the service, catch errors, forward via `next(err)`.
+- **Services** — All validation and business rules. Throw `Error` with a `.status` property. Never touch `req` / `res`.
+- **Repositories** — Raw data access (CRUD on the in-memory array). No validation, no HTTP.
+- **Middleware** — Central error handler reads `err.status` (default 500) and returns `{ error: message }`.
+
+## Data Model
+
+```json
+Task: { "id": 1, "title": "Buy groceries", "done": false }
+```
+
+## Install & Run
+
+```bash
+npm install
+npm start         # production
+npm run dev       # with nodemon auto-reload
+```
+
+Server boots on `http://localhost:3000`.
+
+Interactive API docs: <http://localhost:3000/docs>
 
 ## Endpoints
 
-| Method | Endpoint      | Description                          | Success | Errors        |
-|--------|---------------|---------------------------------------|---------|---------------|
-| GET    | `/`           | Hello check                           | 200     | —             |
-| GET    | `/health`     | Server health check                   | 200     | —             |
-| GET    | `/tasks`      | List all tasks                        | 200     | —             |
-| GET    | `/tasks/:id`  | Get a single task by id               | 200     | 404           |
-| POST   | `/tasks`      | Create a new task                     | 201     | 400           |
-| PUT    | `/tasks/:id`  | Update a task's title and/or done     | 200     | 400, 404      |
-| DELETE | `/tasks/:id`  | Delete a task                         | 204     | 404           |
+| Method | Path           | Description                                  |
+| ------ | -------------- | -------------------------------------------- |
+| GET    | `/tasks`       | List tasks (filters & pagination)            |
+| GET    | `/tasks/:id`   | Get a single task by id                      |
+| POST   | `/tasks`       | Create a new task                            |
+| PUT    | `/tasks/:id`   | Update an existing task (title and/or done)  |
+| DELETE | `/tasks/:id`   | Delete a task                                |
+| GET    | `/stats`       | Get task counts                              |
+| POST   | `/reset`       | Reseed tasks to the default 4 sample tasks   |
 
-### Extras
+### `GET /tasks`
 
-| Method | Endpoint             | Description                       | Success | Errors |
-|--------|-----------------------|------------------------------------|---------|--------|
-| GET    | `/tasks?done=true`    | Filter tasks by done status       | 200     | —      |
-| GET    | `/tasks?search=milk`  | Search tasks by title             | 200     | —      |
-| GET    | `/stats`              | Task counts (total/done/open)     | 200     | —      |
-| POST   | `/reset`              | Reset tasks to seed data          | 200     | —      |
+Query params (all optional):
 
-#### Why POST for `/reset`?
-
-`POST /reset` restores the task list to its original seed data. POST is used instead of GET because this endpoint **changes server state** (it clears and re-seeds the `tasks` array) — and by HTTP convention, GET must never have side effects. GET requests can be triggered accidentally by browsers, crawlers, or caches; POST cannot, which keeps state-changing actions like this one safe from accidental triggering.
-
-## Example Request
+- `done` — boolean filter (`true` / `false`)
+- `search` — case-insensitive substring match against `title`
+- `limit` — max items to return
+- `offset` — items to skip
 
 ```bash
-curl -i -X POST http://localhost:3000/tasks -H "Content-Type: application/json" -d '{"title":"Buy Book"}'
+curl "http://localhost:3000/tasks?done=false&search=gro&limit=5&offset=0"
 ```
 
-```
-HTTP/1.1 201 Created
-Content-Type: application/json; charset=utf-8
+Response:
 
+```json
 {
-  "id": 5,
-  "title": "Buy Book",
-  "done": false
+  "data": [
+    { "id": 1, "title": "Buy groceries", "done": false }
+  ],
+  "total": 1,
+  "count": 1
 }
 ```
 
+### `GET /tasks/:id`
+
 ```bash
-curl -i -X POST http://localhost:3000/reset
+curl http://localhost:3000/tasks/1
+# 200: { "id": 1, "title": "Buy groceries", "done": false }
+# 404: { "error": "Task not found" }
 ```
 
+### `POST /tasks`
+
+```bash
+curl -X POST http://localhost:3000/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Walk the dog"}'
 ```
-HTTP/1.1 200 OK
-Content-Type: application/json; charset=utf-8
+
+```json
+// 201
+{ "id": 5, "title": "Walk the dog", "done": false }
+// 400
+{ "error": "Title is required and must be a non-empty string" }
 ```
 
-## API Docs (Swagger UI)
+### `PUT /tasks/:id`
 
-![Swagger UI screenshot](./swagger.png)
+Body must include at least one of `title` or `done`.
 
-Verified
-All endpoints tested via curl with correct status codes (201, 200, 204, 404, 400)
-Swagger UI at /docs lists every endpoint, and the full CRUD cycle works via "Try it out"
-Confirmed in-memory data resets on server restart (see Mortality Experiment below)
+```bash
+curl -X PUT http://localhost:3000/tasks/1 \
+  -H "Content-Type: application/json" \
+  -d '{"done": true}'
+```
 
-## The Mortality Experiment
+```json
+// 200
+{ "id": 1, "title": "Buy groceries", "done": true }
+// 400 — neither field
+{ "error": "At least one of \"title\" or \"done\" must be provided" }
+// 404
+{ "error": "Task not found" }
+```
 
-Tasks created via `POST /tasks` live only in the server's RAM. `data/tasks.js` on disk holds only the original seed data, none of the CRUD operations write back to the file. Restarting the server wipes the in-memory array, so every restart reloads the same seed data, and anything created in the previous run is gone for good. This is exactly why real applications need a database.
+### `DELETE /tasks/:id`
 
-## What I Learned
+```bash
+curl -X DELETE http://localhost:3000/tasks/1
+# 204 No Content
+# 404
+{ "error": "Task not found" }
+```
 
-Building this taught me routing, middleware order, input validation as a business rule (never trust the client), correct HTTP status code usage, and describing an API with OpenAPI/Swagger.
+### `GET /stats`
 
-### Why real APIs never return "everything"
+```bash
+curl http://localhost:3000/stats
+# 200
+{ "totalTasks": 4, "completedTasks": 2, "pendingTasks": 2 }
+```
 
-Here, `GET /tasks` returns the full list by default. But real-world APIs almost never do this. Imagine a table with millions of rows — returning all of them at once means a huge response size: slow to generate on the server, slow to send over the network, and slow for the client to parse.
+### `POST /reset`
 
-It's not just about display. Without pagination, the server would have to read and prepare millions of rows for every single request, even though the client only needs to show 10–20 of them on screen at a time. Pagination (`limit` and `offset`) lets the client ask for a small slice of data, so the server only does the work for that slice — saving memory, bandwidth, and processing time on both ends.
+```bash
+curl -X POST http://localhost:3000/reset
+# 200
+{
+  "message": "Tasks reset to defaults",
+  "data": [
+    { "id": 1, "title": "Buy groceries", "done": false },
+    { "id": 2, "title": "Read a book", "done": true },
+    { "id": 3, "title": "Write project docs", "done": false },
+    { "id": 4, "title": "Workout", "done": true }
+  ],
+  "total": 4
+}
+```
+
+## Swagger / OpenAPI Docs
+
+After starting the server, open:
+
+```
+http://localhost:3000/docs
+```
+
+The UI lists every endpoint with parameters, request body schema, and response codes (200 / 201 / 204 / 400 / 404). It also exposes a **Try it out** panel that calls the running API directly.
+
+## Notes
+
+- Data is in-memory only — restarting the server resets the state to the 4 default sample tasks.
+- No authentication, no database, no extra endpoints beyond the list above.

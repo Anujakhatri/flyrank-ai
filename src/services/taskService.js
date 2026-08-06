@@ -1,85 +1,154 @@
+// Service layer — business rules and validation. Throws Error with .status.
+
 const taskRepository = require('../repositories/taskRepository');
+const { DEFAULT_TASKS } = require('../data/tasks');
 
-function getAll(filters){
-    let result = taskRepository.findAll();
-
-    if (filters.done !== undefined) {
-        const isDone = filters.done === 'true'; 
-        result = result.filter(task => task.done === isDone);
-    }
-
-    if (filters.search){
-        const term = filters.search.toLowerCase();
-        result = result.filter(task => task.title.toLowerCase().includes(term));
-    }
-
-    const offset = parseInt(filters.offset) || 0;
-    const limit = filters.limit !== undefined ? parseInt(filters.limit) : result.length;
-    result = result.slice(offset, offset + limit);
-
-    return result;
+function toBool(v) {
+  if (typeof v === 'boolean') return v;
+  if (v === 'true' || v === '1' || v === 1) return true;
+  if (v === 'false' || v === '0' || v === 0) return false;
+  return undefined;
 }
 
-function getById(id){
-    const task = taskRepository.findById(id);
-    if (!task) {
-        const error = new Error("Task not found");
-        error.statusCode = 404;
-        throw error;
-    }
-    return task;
+function listTasks({ done, search, limit, offset } = {}) {
+  let tasks = taskRepository.findAll();
+
+  const doneFilter = toBool(done);
+  if (doneFilter !== undefined) {
+    tasks = tasks.filter((t) => t.done === doneFilter);
+  }
+
+  if (search) {
+    const needle = String(search).toLowerCase();
+    tasks = tasks.filter((t) => t.title.toLowerCase().includes(needle));
+  }
+
+  const total = tasks.length;
+  const off = offset ? parseInt(offset, 10) : 0;
+  const lim = limit ? parseInt(limit, 10) : tasks.length;
+  const start = Number.isFinite(off) ? off : 0;
+  const end = start + (Number.isFinite(lim) ? lim : tasks.length);
+  const paginated = tasks.slice(start, end);
+
+  return { data: paginated, total };
 }
 
-function createTask(title){
-    if (!title || title.trim() === '') {
-        const error = new Error("Title is required and cannot be empty");
-        error.statusCode = 400;
-        throw error;
-    }
-    return taskRepository.create({title: title.trim() });
+function getTask(id) {
+  const taskId = parseInt(id, 10);
+  if (!Number.isInteger(taskId) || taskId <= 0) {
+    const err = new Error('Invalid task id');
+    err.status = 400;
+    throw err;
+  }
+  const task = taskRepository.findById(taskId);
+  if (!task) {
+    const err = new Error('Task not found');
+    err.status = 404;
+    throw err;
+  }
+  return task;
 }
 
-function updateTask(id, updates){
-    const task = taskRepository.findById(id);
-    if (!task) {
-        const error = new Error("Task not found");
-        error.statusCode = 404;
-        throw error;
-    }
-
-    const {title, done } = updates;
-
-    if (title === undefined && done === undefined) {
-        const error = new Error("Provide at least 'title' or 'done' to update");
-        error.statusCode = 400;
-        throw error;
-    }
-
-    if (title !== undefined) {
-        if (typeof title !== 'string' || title.trim() === '') {
-            const error = new Error("Title must be a non-empty string");
-            error.statusCode = 400;
-            throw error;
-        }
-    }
-
-    if (done !== undefined && typeof done !== 'boolean') {
-        const error = new Error("Done must be a boolean");
-        error.statusCode = 400;
-        throw error;
-    }
-
-    return taskRepository.update(id, { title, done });
+function createTask(body) {
+  if (!body || typeof body !== 'object') {
+    const err = new Error('Request body required');
+    err.status = 400;
+    throw err;
+  }
+  const { title } = body;
+  if (title === undefined || title === null || String(title).trim() === '') {
+    const err = new Error('Title is required and must be a non-empty string');
+    err.status = 400;
+    throw err;
+  }
+  return taskRepository.create({ title: String(title).trim(), done: false });
 }
 
-function deleteTask(id){
-const task = taskRepository.findById(id);
-    if (!task) {
-        const error = new Error("Task not found");
-        error.statusCode = 404;
-        throw error;
+function updateTask(id, body) {
+  const taskId = parseInt(id, 10);
+  if (!Number.isInteger(taskId) || taskId <= 0) {
+    const err = new Error('Invalid task id');
+    err.status = 400;
+    throw err;
+  }
+  if (!body || typeof body !== 'object') {
+    const err = new Error('Request body required');
+    err.status = 400;
+    throw err;
+  }
+
+  const hasTitle = body.title !== undefined;
+  const hasDone = body.done !== undefined;
+
+  if (!hasTitle && !hasDone) {
+    const err = new Error('At least one of "title" or "done" must be provided');
+    err.status = 400;
+    throw err;
+  }
+
+  const patch = {};
+  if (hasTitle) {
+    if (body.title === null || String(body.title).trim() === '') {
+      const err = new Error('Title must be a non-empty string');
+      err.status = 400;
+      throw err;
     }
-    return taskRepository.remove(id);
+    patch.title = String(body.title).trim();
+  }
+  if (hasDone) {
+    const bool = toBool(body.done);
+    if (bool === undefined) {
+      const err = new Error('"done" must be a boolean');
+      err.status = 400;
+      throw err;
+    }
+    patch.done = bool;
+  }
+
+  const updated = taskRepository.update(taskId, patch);
+  if (!updated) {
+    const err = new Error('Task not found');
+    err.status = 404;
+    throw err;
+  }
+  return updated;
 }
 
-module.exports = { getAll, getById, createTask, updateTask, deleteTask };
+function deleteTask(id) {
+  const taskId = parseInt(id, 10);
+  if (!Number.isInteger(taskId) || taskId <= 0) {
+    const err = new Error('Invalid task id');
+    err.status = 400;
+    throw err;
+  }
+  const removed = taskRepository.remove(taskId);
+  if (!removed) {
+    const err = new Error('Task not found');
+    err.status = 404;
+    throw err;
+  }
+  return removed;
+}
+
+function getStats() {
+  const all = taskRepository.findAll();
+  const totalTasks = all.length;
+  const completedTasks = all.filter((t) => t.done).length;
+  const pendingTasks = totalTasks - completedTasks;
+  return { totalTasks, completedTasks, pendingTasks };
+}
+
+function resetTasks() {
+  taskRepository.reset(DEFAULT_TASKS);
+  return taskRepository.findAll();
+}
+
+module.exports = {
+  listTasks,
+  getTask,
+  createTask,
+  updateTask,
+  deleteTask,
+  getStats,
+  resetTasks,
+};

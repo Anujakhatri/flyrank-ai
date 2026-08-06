@@ -1,29 +1,46 @@
-const swaggerJsDoc = require('swagger-jsdoc');
+// Swagger/OpenAPI configuration — combines swagger-jsdoc-generated paths with
+// reusable component schemas.
 
-const swaggerOptions = {
-    definition: {
-        openapi: '3.0.0',
-        info: {
-            title: 'Task CRUD API',
-            version: '1.0.0',
-            description: 'A simple task management API built step by step'
-        },
-        servers: [{ url: 'http://localhost:3000' }],
-        components: {
-            schemas: {
-                Task: {
-                    type: 'object',
-                    properties: {
-                        id: { type: 'integer', example: 1 },
-                        title: { type: 'string', example: 'Buy Book' },
-                        done: { type: 'boolean', example: false }
-                    }
-                }
-            }
-        }
+const swaggerJSDoc = require('swagger-jsdoc');
+
+const definition = {
+  openapi: '3.0.0',
+  info: {
+    title: 'Task Management API',
+    version: '1.0.0',
+    description: 'A simple CRUD API for managing tasks.',
+  },
+  servers: [
+    {
+      url: 'http://localhost:3000',
+      description: 'Local development server',
     },
-    apis: ['./src/routes/*.js'] //all route files to JSDoc
+  ],
+  components: {
+    schemas: {
+      Task: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          title: { type: 'string', example: 'Buy groceries' },
+          done: { type: 'boolean', example: false },
+        },
+        required: ['id', 'title', 'done'],
+      },
+      Error: {
+        type: 'object',
+        properties: {
+          error: { type: 'string', example: 'Task not found' },
+        },
+        required: ['error'],
+      },
+    },
+  },
 };
 
-const swaggerSpec = swaggerJsDoc(swaggerOptions);
-module.exports = swaggerSpec;
+const options = {
+  definition,
+  apis: ['./src/routes/*.js'],
+};
+
+module.exports = swaggerJSDoc(options);
