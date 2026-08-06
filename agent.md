@@ -376,6 +376,3 @@ the learning journey.
    "before / after the refactor").
 3. Tone — every line in the human README has a voice; the AI's
    reads like generated documentation.
-4. Don't claim "done" until you've actually clicked through every
-   endpoint in Swagger UI. (The AI shipped a bug in `POST /reset`
-   that a real manual test would have caught earlier.)
