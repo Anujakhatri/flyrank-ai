@@ -1,238 +1,95 @@
-# Task API
+# Task CRUD API
 
-A simple Express CRUD API for managing tasks.
+A simple RESTful CRUD API for managing tasks, built with Node.js and Express — created step by step to learn backend fundamentals: routing, validation, status codes, and API documentation with Swagger.
 
-## Getting started
+## Tech Stack
 
-Install dependencies:
+- Node.js
+- Express
+- swagger-ui-express (interactive API docs)
+
+## Installation & Run
 
 ```bash
+git clone https://github.com/Anujakhatri/flyrank-ai.git
+cd first-crud-api
 npm install
+npx nodemon index.js
 ```
 
-Start the server:
-
-```bash
-npm start
-```
-
-The API runs at `http://localhost:3000`.
-
-OpenAPI docs (Swagger UI) are at [http://localhost:3000/docs](http://localhost:3000/docs). The spec lives in `openapi.json`.
+Server runs at `http://localhost:3000`.
+Interactive docs available at `http://localhost:3000/docs`.
 
 ## Endpoints
 
-### `GET /`
+| Method | Endpoint      | Description                          | Success | Errors        |
+|--------|---------------|---------------------------------------|---------|---------------|
+| GET    | `/`           | Hello check                           | 200     | —             |
+| GET    | `/health`     | Server health check                   | 200     | —             |
+| GET    | `/tasks`      | List all tasks                        | 200     | —             |
+| GET    | `/tasks/:id`  | Get a single task by id               | 200     | 404           |
+| POST   | `/tasks`      | Create a new task                     | 201     | 400           |
+| PUT    | `/tasks/:id`  | Update a task's title and/or done     | 200     | 400, 404      |
+| DELETE | `/tasks/:id`  | Delete a task                         | 204     | 404           |
 
-Returns metadata about the API.
+### Extras
 
-**Response**
+| Method | Endpoint             | Description                       | Success | Errors |
+|--------|-----------------------|------------------------------------|---------|--------|
+| GET    | `/tasks?done=true`    | Filter tasks by done status       | 200     | —      |
+| GET    | `/tasks?search=milk`  | Search tasks by title             | 200     | —      |
+| GET    | `/stats`              | Task counts (total/done/open)     | 200     | —      |
+| POST   | `/reset`              | Reset tasks to seed data          | 200     | —      |
 
-```json
+#### Why POST for `/reset`?
+
+`POST /reset` restores the task list to its original seed data. POST is used instead of GET because this endpoint **changes server state** (it clears and re-seeds the `tasks` array) — and by HTTP convention, GET must never have side effects. GET requests can be triggered accidentally by browsers, crawlers, or caches; POST cannot, which keeps state-changing actions like this one safe from accidental triggering.
+
+## Example Request
+
+```bash
+curl -i -X POST http://localhost:3000/tasks -H "Content-Type: application/json" -d '{"title":"Buy Book"}'
+```
+
+```
+HTTP/1.1 201 Created
+Content-Type: application/json; charset=utf-8
+
 {
-  "name": "Task API",
-  "version": "1.0",
-  "endpoints": ["/tasks"]
+  "id": 5,
+  "title": "Buy Book",
+  "done": false
 }
 ```
 
-**Example**
-
 ```bash
-curl http://localhost:3000/
+curl -i -X POST http://localhost:3000/reset
 ```
 
-### `GET /health`
-
-Health check endpoint.
-
-**Response**
-
-```json
-{
-  "status": "ok"
-}
+```
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
 ```
 
-**Example**
+## API Docs (Swagger UI)
 
-```bash
-curl http://localhost:3000/health
-```
+![Swagger UI screenshot](./swagger.png)
 
-### `GET /tasks`
+Verified
+All endpoints tested via curl with correct status codes (201, 200, 204, 404, 400)
+Swagger UI at /docs lists every endpoint, and the full CRUD cycle works via "Try it out"
+Confirmed in-memory data resets on server restart (see Mortality Experiment below)
 
-Returns all tasks. Optional query parameters filter the list (the part after `?` — filters, not addresses).
+## The Mortality Experiment
 
-| Query | Example | Effect |
-|-------|---------|--------|
-| `done` | `?done=true` | Only finished tasks |
-| `done` | `?done=false` | Only open tasks |
-| `search` | `?search=water` | Title contains the word (case-insensitive) |
+Tasks created via `POST /tasks` live only in the server's RAM. `data/tasks.js` on disk holds only the original seed data, none of the CRUD operations write back to the file. Restarting the server wipes the in-memory array, so every restart reloads the same seed data, and anything created in the previous run is gone for good. This is exactly why real applications need a database.
 
-Filters can be combined: `?done=false&search=breakfast`
+## What I Learned
 
-**Response**
+Building this taught me routing, middleware order, input validation as a business rule (never trust the client), correct HTTP status code usage, and describing an API with OpenAPI/Swagger.
 
-```json
-[
-  { "id": 1, "title": "Drink water", "done": true },
-  { "id": 2, "title": "Walk for 10 minutes", "done": false },
-  { "id": 3, "title": "Prepare breakfast", "done": false },
-  { "id": 4, "title": "Prepare for work", "done": true }
-]
-```
+### Why real APIs never return "everything"
 
-**Example**
+Here, `GET /tasks` returns the full list by default. But real-world APIs almost never do this. Imagine a table with millions of rows — returning all of them at once means a huge response size: slow to generate on the server, slow to send over the network, and slow for the client to parse.
 
-```bash
-curl http://localhost:3000/tasks
-curl "http://localhost:3000/tasks?done=true"
-curl "http://localhost:3000/tasks?search=water"
-```
-
-### `GET /stats`
-
-Returns computed counts for the current task list.
-
-**Response**
-
-```json
-{ "total": 7, "done": 3, "open": 4 }
-```
-
-**Example**
-
-```bash
-curl http://localhost:3000/stats
-```
-
-### `POST /reset`
-
-Restores the four seed example tasks. Useful for demos and testing.
-
-**Response (200)**
-
-```json
-[
-  { "id": 1, "title": "Drink water", "done": true },
-  { "id": 2, "title": "Walk for 10 minutes", "done": false },
-  { "id": 3, "title": "Prepare breakfast", "done": false },
-  { "id": 4, "title": "Prepare for work", "done": true }
-]
-```
-
-**Example**
-
-```bash
-curl -X POST http://localhost:3000/reset
-```
-
-### `GET /tasks/:id`
-
-Returns a single task by id.
-
-**Response (200)**
-
-```json
-{ "id": 1, "title": "Drink water", "done": true }
-```
-
-**Response (404)**
-
-```json
-{ "error": "Task 99 not found" }
-```
-
-**Example**
-
-```bash
-curl http://localhost:3000/tasks/1
-curl http://localhost:3000/tasks/99
-```
-
-### `POST /tasks`
-
-Creates a new task.
-
-**Request body**
-
-```json
-{ "title": "Buy book" }
-```
-
-**Response (201)**
-
-```json
-{ "id": 4, "title": "Buy book", "done": false }
-```
-
-**Response (400)**
-
-```json
-{ "error": "title is required and cannot be empty" }
-```
-
-**Example**
-
-```bash
-curl -X POST http://localhost:3000/tasks \
-  -H "Content-Type: application/json" \
-  -d '{"title": "Buy book"}'
-```
-
-### `PUT /tasks/:id`
-
-Updates a task's `title` and/or `done`. Send one or both fields; omitted fields stay unchanged.
-
-**Request body**
-
-```json
-{ "title": "Buy oat book", "done": true }
-```
-
-**Response (200)**
-
-```json
-{ "id": 1, "title": "Buy oat book", "done": true }
-```
-
-**Response (400)**
-
-```json
-{ "error": "request body must include title and/or done" }
-```
-
-**Response (404)**
-
-```json
-{ "error": "Task 99 not found" }
-```
-
-**Example**
-
-```bash
-curl -X PUT http://localhost:3000/tasks/1 \
-  -H "Content-Type: application/json" \
-  -d '{"done": true}'
-```
-
-### `DELETE /tasks/:id`
-
-Deletes a task.
-
-**Response (204)**
-
-Empty body — success, nothing to return.
-
-**Response (404)**
-
-```json
-{ "error": "Task 99 not found" }
-```
-
-**Example**
-
-```bash
-curl -X DELETE http://localhost:3000/tasks/1
-```
+It's not just about display. Without pagination, the server would have to read and prepare millions of rows for every single request, even though the client only needs to show 10–20 of them on screen at a time. Pagination (`limit` and `offset`) lets the client ask for a small slice of data, so the server only does the work for that slice — saving memory, bandwidth, and processing time on both ends.
