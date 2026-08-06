@@ -12,7 +12,12 @@ function getTasks(req, res, next){
 
 function getTaskById(req, res, next){
     try {
-        const id = parseInt(req.params.id);
+        const id = parseInt(req.params.id, 10);
+        if (isNaN(id)) {
+            const error = new Error("Invalid task ID");
+            error.status = 400;
+            throw error;
+        }
         const task = taskService.getById(id);
         res.json(task);
     } catch (error) {
@@ -31,7 +36,12 @@ function createTask(req, res, next){
 
 function updateTask(req, res, next){
     try{
-        const id = parseInt(req.params.id);
+        const id = parseInt(req.params.id, 10);
+        if (isNaN(id)) {
+            const error = new Error("Invalid task ID");
+            error.status = 400;
+            throw error;
+        }
         const task = taskService.updateTask(id, req.body || {});
         res.json(task);
     } catch (error) {
@@ -41,9 +51,14 @@ function updateTask(req, res, next){
 
 function deleteTask(req, res, next){
     try{
-        const id = parseInt(req.params.id);
+        const id = parseInt(req.params.id, 10);
+        if (isNaN(id)) {
+            const error = new Error("Invalid task ID");
+            error.status = 400;
+            throw error;
+        }
         taskService.deleteTask(id);
-        res.status(204).json();
+        res.status(204).end();
     } catch (error) {
         next(error);
     }

@@ -93,3 +93,14 @@ Building this taught me routing, middleware order, input validation as a busines
 Here, `GET /tasks` returns the full list by default. But real-world APIs almost never do this. Imagine a table with millions of rows — returning all of them at once means a huge response size: slow to generate on the server, slow to send over the network, and slow for the client to parse.
 
 It's not just about display. Without pagination, the server would have to read and prepare millions of rows for every single request, even though the client only needs to show 10–20 of them on screen at a time. Pagination (`limit` and `offset`) lets the client ask for a small slice of data, so the server only does the work for that slice — saving memory, bandwidth, and processing time on both ends.
+
+## Bugs Found: Human vs AI Code Review
+
+When comparing the human-written version to an AI-reviewed version, four issues were caught:
+
+| # | Bug | Problem | Fix |
+|---|-----|---------|-----|
+| 1 | **`.json()` on 204** | `res.status(204).json()` sends a response body on a status that [must not have one](https://www.rfc-editor.org/rfc/rfc9110#status.204) per the HTTP spec. | Changed to `res.status(204).end()` — terminates the response with no body. |
+| 2 | **Mixed error property** | Service layer set `error.statusCode`, but the error-handling middleware read `err.status` — so custom status codes were silently ignored and everything fell back to `500`. | Unified to `error.status` everywhere (services + middleware). |
+| 3 | **O(n) ID generation** | `Math.max(...tasks.map(t => t.id)) + 1` scanned every task on every `POST /tasks`. Harmless at 4 tasks, but O(n) per create and would also crash on an empty array (`Math.max()` returns `-Infinity`). | `taskRepository.js` now tracks a `nextId` counter — O(1) per create, and correctly resets after `POST /reset`. |
+| 4 | **3-way duplicated reset logic** | The same four seed tasks were hardcoded in three separate files: `data/tasks.js`, `taskRepository.js`, and `resetService.js`. Changing one would silently leave the others stale. | `data/tasks.js` now exports a `SEED_DATA` constant as the single source of truth. `resetService.js` delegates to `taskRepository.reset()`, which deep-copies from `SEED_DATA`. |
