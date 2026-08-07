@@ -8,7 +8,7 @@ const swaggerOptions = {
             version: '1.0.0',
             description: 'A simple task management API built step by step'
         },
-        servers: [{ url: 'http://localhost:3000' }],
+        servers: [{ url: process.env.API_URL || 'http://localhost:3000' }],
         components: {
             schemas: {
                 Task: {

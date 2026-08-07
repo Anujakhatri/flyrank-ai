@@ -1,26 +1,10 @@
 const taskRepository = require('../repositories/taskRepository');
 
-async function getAll(filters){
-    let result = await taskRepository.findAll();
-
-    if (filters.done !== undefined) {
-        const isDone = filters.done === 'true'; 
-        result = result.filter(task => task.done === isDone);
-    }
-
-    if (filters.search){
-        const term = filters.search.toLowerCase();
-        result = result.filter(task => task.title.toLowerCase().includes(term));
-    }
-
-    const offset = parseInt(filters.offset) || 0;
-    const limit = filters.limit !== undefined ? parseInt(filters.limit) : result.length;
-    result = result.slice(offset, offset + limit);
-
-    return result;
+async function getAll(filters) {
+    return await taskRepository.findAll(filters);
 }
 
-async function getById(id){
+async function getById(id) {
     const task = await taskRepository.findById(id);
     if (!task) {
         const error = new Error("Task not found");
@@ -30,16 +14,16 @@ async function getById(id){
     return task;
 }
 
-async function createTask(title){
+async function createTask(title) {
     if (!title || title.trim() === '') {
         const error = new Error("Title is required and cannot be empty");
         error.status = 400;
         throw error;
     }
-    return await taskRepository.create({title: title.trim() });
+    return await taskRepository.create({ title: title.trim() });
 }
 
-async function updateTask(id, updates){
+async function updateTask(id, updates) {
     const task = await taskRepository.findById(id);
     if (!task) {
         const error = new Error("Task not found");
@@ -47,7 +31,7 @@ async function updateTask(id, updates){
         throw error;
     }
 
-    const {title, done } = updates;
+    const { title, done } = updates;
 
     if (title === undefined && done === undefined) {
         const error = new Error("Provide at least 'title' or 'done' to update");
@@ -72,8 +56,8 @@ async function updateTask(id, updates){
     return await taskRepository.update(id, { title, done });
 }
 
-async function deleteTask(id){
-const task = await taskRepository.findById(id);
+async function deleteTask(id) {
+    const task = await taskRepository.findById(id);
     if (!task) {
         const error = new Error("Task not found");
         error.status = 404;
