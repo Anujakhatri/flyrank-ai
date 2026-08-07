@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const statsService = require('../services/statsService');
+const statsController = require('../controllers/statsController');
 
 /**
  * @openapi
@@ -20,8 +20,6 @@ const statsService = require('../services/statsService');
  *                 open: { type: integer, example: 4 }
  */
 
-router.get('/', (req, res) => {
-    res.json(statsService.getStats());
-});
+router.get('/', statsController.getStats);
 
 module.exports = router;

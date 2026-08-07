@@ -1,7 +1,7 @@
 const taskRepository = require('../repositories/taskRepository');
 
-function getStats(){
-    const all = taskRepository.findAll();
+async function getStats(){
+    const all = await taskRepository.findAll();
     const total = all.length;
     const completed = all.filter(task => task.done).length;
     const pending = total - completed;

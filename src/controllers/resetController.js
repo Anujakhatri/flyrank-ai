@@ -1,7 +1,7 @@
 const resetService = require('../services/resetService');
-function resetTasks(req, res, next){
+async function resetTasks(req, res, next){
     try{
-        const tasks = resetService.resetTasks();
+        const tasks = await resetService.resetTasks();
         res.json({ message: "Tasks have been reset to initial state", tasks });
     } catch (error) {
         next(error);

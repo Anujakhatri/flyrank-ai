@@ -1,7 +1,7 @@
 const taskRepository = require('../repositories/taskRepository');
 
-function getAll(filters){
-    let result = taskRepository.findAll();
+async function getAll(filters){
+    let result = await taskRepository.findAll();
 
     if (filters.done !== undefined) {
         const isDone = filters.done === 'true'; 
@@ -20,8 +20,8 @@ function getAll(filters){
     return result;
 }
 
-function getById(id){
-    const task = taskRepository.findById(id);
+async function getById(id){
+    const task = await taskRepository.findById(id);
     if (!task) {
         const error = new Error("Task not found");
         error.status = 404;
@@ -30,17 +30,17 @@ function getById(id){
     return task;
 }
 
-function createTask(title){
+async function createTask(title){
     if (!title || title.trim() === '') {
         const error = new Error("Title is required and cannot be empty");
         error.status = 400;
         throw error;
     }
-    return taskRepository.create({title: title.trim() });
+    return await taskRepository.create({title: title.trim() });
 }
 
-function updateTask(id, updates){
-    const task = taskRepository.findById(id);
+async function updateTask(id, updates){
+    const task = await taskRepository.findById(id);
     if (!task) {
         const error = new Error("Task not found");
         error.status = 404;
@@ -69,17 +69,17 @@ function updateTask(id, updates){
         throw error;
     }
 
-    return taskRepository.update(id, { title, done });
+    return await taskRepository.update(id, { title, done });
 }
 
-function deleteTask(id){
-const task = taskRepository.findById(id);
+async function deleteTask(id){
+const task = await taskRepository.findById(id);
     if (!task) {
         const error = new Error("Task not found");
         error.status = 404;
         throw error;
     }
-    return taskRepository.remove(id);
+    return await taskRepository.remove(id);
 }
 
 module.exports = { getAll, getById, createTask, updateTask, deleteTask };
