@@ -1,8 +1,8 @@
-const taskService = require('../services/taskService');
+const statsService = require('../services/statsService');
 
-function getStats(req, res, next){
+async function getStats(req, res, next){
     try {
-        const result = taskService.getStats();
+        const result = await statsService.getStats();
         res.json(result);
     } catch (error) {
         next(error);

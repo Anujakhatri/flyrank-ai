@@ -1,7 +1,7 @@
 const taskRepository = require('../repositories/taskRepository');
 
-function resetTasks() {
-    return taskRepository.reset();
+async function resetTasks() {
+    return await taskRepository.reset();
 }
 
 module.exports = { resetTasks };

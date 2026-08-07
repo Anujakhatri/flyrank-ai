@@ -1,16 +1,16 @@
 // http handling middleware
 const taskService = require('../services/taskService');
 
-function getTasks(req, res, next){
+async function getTasks(req, res, next){
     try {
-        const result = taskService.getAll(req.query);
+        const result = await taskService.getAll(req.query);
         res.json(result);
     } catch (error) {
         next(error);
     }
 }
 
-function getTaskById(req, res, next){
+async function getTaskById(req, res, next){
     try {
         const id = parseInt(req.params.id, 10);
         if (isNaN(id)) {
@@ -18,23 +18,23 @@ function getTaskById(req, res, next){
             error.status = 400;
             throw error;
         }
-        const task = taskService.getById(id);
+        const task = await taskService.getById(id);
         res.json(task);
     } catch (error) {
         next(error);
     }
 }
 
-function createTask(req, res, next){
+async function createTask(req, res, next){
     try {
-        const task = taskService.createTask(req.body.title);
+        const task = await taskService.createTask(req.body.title);
         res.status(201).json(task);
     } catch (error) {
         next(error);
     }
 }
 
-function updateTask(req, res, next){
+async function updateTask(req, res, next){
     try{
         const id = parseInt(req.params.id, 10);
         if (isNaN(id)) {
@@ -42,14 +42,14 @@ function updateTask(req, res, next){
             error.status = 400;
             throw error;
         }
-        const task = taskService.updateTask(id, req.body || {});
+        const task = await taskService.updateTask(id, req.body || {});
         res.json(task);
     } catch (error) {
         next(error);
     }
 }
 
-function deleteTask(req, res, next){
+async function deleteTask(req, res, next){
     try{
         const id = parseInt(req.params.id, 10);
         if (isNaN(id)) {
@@ -57,7 +57,7 @@ function deleteTask(req, res, next){
             error.status = 400;
             throw error;
         }
-        taskService.deleteTask(id);
+        await taskService.deleteTask(id);
         res.status(204).end();
     } catch (error) {
         next(error);
