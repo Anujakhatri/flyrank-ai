@@ -73,7 +73,7 @@ Content-Type: application/json; charset=utf-8
 
 ## API Docs (Swagger UI)
 
-![Swagger UI screenshot](./swagger.png)
+![Swagger UI screenshot](src/public/swagger.png)
 
 Verified
 All endpoints tested via curl with correct status codes (201, 200, 204, 404, 400)
@@ -83,6 +83,38 @@ Confirmed in-memory data resets on server restart (see Mortality Experiment belo
 ## The Mortality Experiment
 
 Tasks created via `POST /tasks` live only in the server's RAM. `data/tasks.js` on disk holds only the original seed data, none of the CRUD operations write back to the file. Restarting the server wipes the in-memory array, so every restart reloads the same seed data, and anything created in the previous run is gone for good. This is exactly why real applications need a database.
+
+## Database Migration (PostgreSQL)
+
+To solve the limitations discovered in the "Mortality Experiment", this project was migrated from in-memory arrays to a real database.
+
+### Why PostgreSQL was chosen
+PostgreSQL was chosen because it is a robust, open-source, and professional-grade relational database. Unlike in-memory arrays which lose data on restart, PostgreSQL provides permanent, persistent storage. It supports advanced SQL features, handles high concurrency perfectly for backend APIs, and is an industry standard for modern web applications.
+
+### Where the database is stored
+Unlike SQLite (which stores data in a local `.db` file in your project folder), PostgreSQL runs as a standalone server process. The data is managed by the PostgreSQL engine and stored securely in its internal system directories. Our API connects to this database server over a network port (typically `5432`) using the `pg` database driver.
+
+### How to start the project
+When you start the project, the API connects to Postgres, creates the `tasks` table automatically if it doesn't exist, and inserts seed data only if the table is empty.
+
+1. Ensure you have a PostgreSQL server installed and running locally (or remotely).
+2. Create an empty database named `tasks_db`.
+3. Update your database credentials in `src/config/db.js`.
+4. Run the server:
+```bash
+npx nodemon app.js
+```
+The connection will initialize automatically and your data will survive server restarts!
+
+### Database Viewer
+![Database Viewer](src/public/database.png)
+
+### Example SQL Query
+Here is an example of an SQL query you can execute manually in your database viewer to count all tasks:
+```sql
+SELECT COUNT(*) FROM tasks;
+SELECT title FROM tasks WHERE done='f';
+```
 
 ## What I Learned
 
