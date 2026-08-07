@@ -1,5 +1,11 @@
 const pool = require('../config/db');
 
+function formatTaskDates(task) {
+    if (!task) return task;
+    const format = (d) => d ? new Date(d).toISOString().replace('T', ' ').substring(0, 19) : d;
+    return { ...task, created_at: format(task.created_at), updated_at: format(task.updated_at) };
+}
+
 async function intializeDb() {
     //create table if not exists
     await pool.query(`
@@ -14,7 +20,6 @@ async function intializeDb() {
 
     // alter table in case columns are missing
     await pool.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`);
-    await pool.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`);
 
     //check table is empty or not
     const result = await pool.query('SELECT COUNT(*) from tasks');
@@ -50,11 +55,14 @@ async function findAll(filters = {}) {
         query += ' WHERE ' + conditions.join(' AND ');
     }
 
-    query += ' ORDER BY title ASC';
+    query += ' ORDER BY id ASC';
 
     if (filters.limit !== undefined) {
-        values.push(parseInt(filters.limit));
-        query += ` LIMIT $${values.length}`;
+        const limit = parseInt(filters.limit);
+        if (!isNaN(limit) && limit > 0) {
+            values.push(limit);
+            query += ` LIMIT $${values.length}`;
+        }
     }
 
     const offset = parseInt(filters.offset) || 0;
@@ -64,27 +72,36 @@ async function findAll(filters = {}) {
     }
 
     const result = await pool.query(query, values);
-    return result.rows;
+    return result.rows.map(formatTaskDates);
 }
 
 async function findById(id) {
     const result = await pool.query('SELECT * FROM tasks WHERE id = $1', [id]);
-    return result.rows[0];
+    return formatTaskDates(result.rows[0]);
 }
 
 async function create(task) {
     const newTask = await pool.query('INSERT INTO tasks (title) VALUES ($1) RETURNING *', [task.title]);
-    return newTask.rows[0];
+    return formatTaskDates(newTask.rows[0]);
 }
 
 async function update(id, updates) {
-    const task = await pool.query('UPDATE tasks SET title = $1, done = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3 RETURNING *', [updates.title, updates.done, id]);
-    return task.rows[0];
+    const existing = await findById(id);
+    if (!existing) return undefined;
+    const merged = {
+        title: updates.title !== undefined ? updates.title : existing.title,
+        done: updates.done !== undefined ? updates.done : existing.done,
+    };
+    const task = await pool.query(
+        'UPDATE tasks SET title = $1, done = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3 RETURNING *',
+        [merged.title, merged.done, id]
+    );
+    return formatTaskDates(task.rows[0]);
 }
 
 async function remove(id) {
-    const index = await pool.query('DELETE FROM tasks WHERE id = $1 RETURNING *', [id]);
-    return result.rows.lenght > 0;
+    const result = await pool.query('DELETE FROM tasks WHERE id = $1 RETURNING *', [id]);
+    return result.rows.length > 0;
 }
 
 async function reset() {
@@ -97,7 +114,7 @@ async function reset() {
         `);
 
     const result = await pool.query('SELECT * FROM tasks ORDER BY id');
-    return result.rows;
+    return result.rows.map(formatTaskDates);
 }
 
 async function getStats() {
