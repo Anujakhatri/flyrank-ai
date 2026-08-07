@@ -1,7 +1,19 @@
-const { tasks, SEED_DATA } = require('../data/tasks');
+// const { tasks, SEED_DATA } = require('../data/tasks');
 
 let nextId = Math.max(...tasks.map(t => t.id)) + 1;
 
+const pool = require('../config/db');
+
+async function intializeDb(){
+    //create table if not exists
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS tasks (
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            done BOOLEAN DEFAULT false
+        );
+    `);
+}
 function findAll() {
     return tasks;
 }
