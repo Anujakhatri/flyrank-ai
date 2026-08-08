@@ -4,10 +4,10 @@ on:
   push:
     branches: [main]
     paths:
-      - 'src/**'
-      - 'app.js'
-      - 'package.json'
-      - 'package-lock.json'
+      - 'first-crud-api/src/**'
+      - 'first-crud-api/app.js'
+      - 'first-crud-api/package.json'
+      - 'first-crud-api/package-lock.json'
       - '.github/workflows/backend.yml'
   pull_request:
     branches: [main]
@@ -15,6 +15,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: first-crud-api
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,9 +29,10 @@ jobs:
         with:
           node-version: '20'
           cache: npm
+          cache-dependency-path: first-crud-api/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
       - name: Lint
-        run: npm run lint --if-present
+        run: npx oxlint .
